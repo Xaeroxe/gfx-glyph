@@ -146,21 +146,20 @@ impl<'a> GlyphBrushBuilder<'a> {
         let (cache_width, cache_height) = self.initial_cache_size;
         let font_cache_tex = create_texture(&mut factory, cache_width, cache_height).unwrap();
 
-        // let mut font_map = HashMap::with_capacity(self.font_data.len());
-        // for (idx, data) in self.font_data.into_iter().enumerate() {
-        //     font_map.insert(FontId(idx), )
-        // }
+        let fonts = self.font_data.into_iter().enumerate()
+            .map(|(idx, data)| (FontId(idx), font(data).unwrap()))
+            .collect();
+
+        let font_cache = Cache::new(
+            cache_width,
+            cache_height,
+            self.gpu_cache_scale_tolerance,
+            self.gpu_cache_position_tolerance,
+        );
 
         GlyphBrush {
-            fonts: self.font_data.into_iter().enumerate()
-                .map(|(idx, data)| (FontId(idx), font(data).unwrap()))
-                .collect(),
-            font_cache: Cache::new(
-                cache_width,
-                cache_height,
-                self.gpu_cache_scale_tolerance,
-                self.gpu_cache_position_tolerance,
-            ),
+            fonts,
+            font_cache,
             font_cache_tex,
 
             factory,

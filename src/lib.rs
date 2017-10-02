@@ -93,11 +93,11 @@ pub type Rect<T> = rusttype::Rect<T>;
 /// Aliased type to allow lib usage without declaring underlying **rusttype** lib
 pub type Point<T> = rusttype::Point<T>;
 /// Aliased type to allow lib usage without declaring underlying **rusttype** lib
-pub type PositionedGlyph = rusttype::PositionedGlyph<'static>;
+pub type PositionedGlyph<'font> = rusttype::PositionedGlyph<'font>;
 /// Aliased type to allow lib usage without declaring underlying **rusttype** lib
-pub type ScaledGlyph = rusttype::ScaledGlyph<'static>;
+pub type ScaledGlyph<'font> = rusttype::ScaledGlyph<'font>;
 /// Aliased type to allow lib usage without declaring underlying **rusttype** lib
-pub type Glyph = rusttype::Glyph<'static>;
+pub type Glyph<'font> = rusttype::Glyph<'font>;
 /// Aliased type to allow lib usage without declaring underlying **rusttype** lib
 pub type SharedBytes<'a> = rusttype::SharedBytes<'a>;
 /// Aliased type to allow lib usage without declaring underlying **rusttype** lib
@@ -171,14 +171,14 @@ fn hash<H: Hash>(hashable: &H) -> u64 {
 /// ```
 pub struct GlyphBrush<'a, R: gfx::Resources, F: gfx::Factory<R>>{
     fonts: HashMap<FontId, rusttype::Font<'a>>,
-    font_cache: Cache,
+    font_cache: Cache<'a>,
     font_cache_tex: (gfx::handle::Texture<R, TexSurface>, gfx_core::handle::ShaderResourceView<R, f32>),
     factory: F,
     draw_cache: Option<DrawnGlyphBrush<R>>,
 
     // cache of section-layout hash -> computed glyphs, this avoid repeated glyph computation
     // for identical layout/sections common to repeated frame rendering
-    calculate_glyph_cache: HashMap<u64, GlyphedSection>,
+    calculate_glyph_cache: HashMap<u64, GlyphedSection<'a>>,
 
     // buffer of section-layout hashs (that must exist in the calculate_glyph_cache)
     // to be rendered on the next `draw_queued` call
@@ -390,10 +390,12 @@ impl<'font, R: gfx::Resources, F: gfx::Factory<R>> GlyphBrush<'font, R, F> {
                         Consider building using `.initial_cache_size{new:?}` to avoid resizing",
                         old = (width, height), new = (new_width, new_height), reason = err);
 
-                    let new_cache = Cache::new(new_width,
-                                               new_height,
-                                               self.gpu_cache_scale_tolerance,
-                                               self.gpu_cache_position_tolerance);
+                    let new_cache = Cache::new(
+                        new_width,
+                        new_height,
+                        self.gpu_cache_scale_tolerance,
+                        self.gpu_cache_position_tolerance,
+                    );
 
                     match create_texture(&mut self.factory, new_width, new_height) {
                         Ok((new_tex, tex_view)) => {
@@ -555,14 +557,14 @@ struct DrawnGlyphBrush<R: gfx::Resources> {
 }
 
 #[derive(Clone)]
-struct GlyphedSection {
+struct GlyphedSection<'font> {
     bounds: Rect<f32>,
-    glyphs: Vec<GlyphedSectionText>,
+    glyphs: Vec<GlyphedSectionText<'font>>,
     z: f32,
 }
 
 #[derive(Clone)]
-pub struct GlyphedSectionText(pub Vec<PositionedGlyph>, pub Color, pub FontId);
+pub struct GlyphedSectionText<'font>(pub Vec<PositionedGlyph<'font>>, pub Color, pub FontId);
 
 /// Returns a Font from font bytes info or an error reason.
 pub fn font<'a, B: Into<SharedBytes<'a>>>(font_bytes: B) -> Result<Font<'a>, &'static str> {
