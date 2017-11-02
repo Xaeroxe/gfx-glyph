@@ -63,6 +63,7 @@ mod gpu_cache;
 mod linebreak;
 mod pipe;
 mod builder;
+mod headless;
 
 use gfx::traits::FactoryExt;
 use rusttype::{FontCollection, point, vector};
@@ -83,6 +84,7 @@ pub use section::*;
 pub use layout::*;
 pub use linebreak::*;
 pub use builder::*;
+pub use headless::*;
 
 /// Aliased type to allow lib usage without declaring underlying **rusttype** lib
 pub type Font<'a> = rusttype::Font<'a>;
@@ -286,7 +288,6 @@ impl<'font, R: gfx::Resources, F: gfx::Factory<R>> GlyphBrush<'font, R, F> {
     fn cache_glyphs<L>(&mut self, section: &VariedSection, layout: &L) -> u64
         where L: GlyphPositioner,
     {
-        let start = Instant::now();
         let section_hash = hash(&(section, layout));
 
         if self.cache_glyph_positioning {
@@ -305,8 +306,6 @@ impl<'font, R: gfx::Resources, F: gfx::Factory<R>> GlyphBrush<'font, R, F> {
                 z: section.z,
             });
         }
-        trace!("layout.calculate_glyphs in {:.3}ms",
-            f64::from(start.elapsed().subsec_nanos()) / 1_000_000_f64);
         section_hash
     }
 
