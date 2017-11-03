@@ -386,7 +386,7 @@ impl<'font, R: gfx::Resources, F: gfx::Factory<R>> GlyphBrush<'font, R, F> {
                         cache.texture_updated = true;
                     }
                     info!("Increasing glyph texture size {old:?} -> {new:?}, as {reason:?}. \
-                        Consider building using `.initial_cache_size{new:?}` to avoid resizing",
+                        Consider building with `.initial_cache_size({new:?})` to avoid resizing",
                         old = (width, height), new = (new_width, new_height), reason = err);
 
                     let new_cache = Cache::new(
